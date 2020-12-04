@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Documentazione Sme.UP</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="Description">
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  
+  <!--Themes-->
+  <link id="theme" rel="stylesheet" href="//unpkg.com/docsify/lib/themes/vue.css">
+  <link id="customTheme" rel="stylesheet" href="customLightTheme.css">
+  <!--<link id="theme" rel="stylesheet" href="//unpkg.com/docsify/themes/dark.css">-->
+  
+  <!--Edit on Github plugin-->
+  <script src="EditOnGithub.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@master/dist/flexsearch.min.js"></script>
+  <script src="data.js"></script>
+
+  <script>
+    function checkWindowSize(){
+      console.log(window.innerHeight);
+      console.log(screen.height)
+      if(!(window.innerWidth == screen.width)){
+        body = document.getElementsByTagName('body');
+        table = document.getElementsByTagName('table');
+        suggestions = document.getElementById('suggestions');
+        theme = document.getElementById('switch');
+        theme.classList.add('no-sidebar');
+        suggestions.classList.add('no-sidebar');
+        body[0].classList.add('no-sidebar');
+        table[0].classList.add('no-sidebar');
+      }
+    }
+
+    function switchTheme() {
+      if (document.getElementById('theme').href == "http://unpkg.com/docsify/themes/dark.css") {
+        document.getElementById('theme').href = "http://unpkg.com/docsify/lib/themes/vue.css";
+        document.getElementById('customTheme').href = "customLightTheme.css";
+        console.log(document.getElementById('theme').href)
+      } else {
+        document.getElementById('theme').href = "http://unpkg.com/docsify/themes/dark.css";
+        document.getElementById('customTheme').href = "customDarkTheme.css";
+      }
+    };
+  </script>
+
+</head>
+
+  
+  <body onload="checkWindowSize()">
+
+    <div id="app"></div>
+
+    <table id="search">
+      <tr>
+          <td>       
+              <input type="text" id="autocomplete">     
+              <input type="text" id="userinput" placeholder="Search...">
+          </td>
+      </tr>
+  </table>
+
+  <div id="suggestions"></div>
+  
+  <button id="switch" onclick="switchTheme()">Switch Theme</button>
+  
+  <script>
+    var found = false;
+
+      window.$docsify = {
+        name: 'Documentazione di smeup',
+        homepage: 'README.md',
+        auto2top: true,
+        notFoundPage: 'notFoundPage.md',
+
+        search: 'auto',
+        search: {
+          placeholder: 'Type to search',
+          depth: 4
+        },
+
+        loadSidebar: 'documentazione/_sidebar.md',
+        subMaxLevel: 0,
+        
+        plugins: [
+          EditOnGithubPlugin.create('','https://github.com/smeup/doc-engine/edit/master/','Edit')
+        ]
+      
+      };
+    
+  </script>
+
+  <script src="//unpkg.com/docsify/lib/docsify.min.js"></script>
+  <script src="//unpkg.com/docsify-sidebar-collapse/dist/docsify-sidebar-collapse.min.js"></script>
+  <script src="//unpkg.com/docsify/lib/plugins/search.js"></script>
+  
+  
+  <script>
+    (function(){
+        var index = new FlexSearch({
+            encode: "advanced",
+            tokenize: "reverse",
+            suggest: true,
+            cache: true,
+            doc: {
+                id: "id",
+                field: [
+                    "title",
+                    "cat",
+                    "href",
+                    "voci",
+                    "rel",
+                    "num"
+                ]
+            }
+        });
+        index.add(data)
+        var suggestions = document.getElementById("suggestions");
+        var autocomplete = document.getElementById("autocomplete");
+        var userinput = document.getElementById("userinput");
+        userinput.addEventListener("input", show_results, true);
+        userinput.addEventListener("keyup", accept_autocomplete, true);
+        suggestions.addEventListener("click", accept_suggestion, true);
+        function show_results(){
+            var value = this.value;
+            var results = index.search({
+                query: value,
+                field: ["title", "cat", "voci", "rel", "num"],
+                bool: "or"
+            });
+            var entry, childs = suggestions.childNodes;
+            console.log(suggestions.childNodes)
+
+            
+            var i = 0, len = results.length;
+            for(; i < len; i++){
+                entry = childs[i];
+                console.log(entry)
+                if(!entry){
+                    entry = document.createElement("a");
+                    suggestions.appendChild(entry);
+                }
+                console.log(results[i])
+                entry.setAttribute("href", "https://doc.smeup.com/#/" + results[i].href);
+                entry.textContent = results[i].title + ' (' + results[i].cat + ')';
+            }
+            while(childs.length > len){
+                suggestions.removeChild(childs[i])
+            }
+            var first_result = data[results[0]];
+            var match = first_result && first_result.toLowerCase().indexOf(value.toLowerCase());
+            if(first_result && (match !== -1)){
+                autocomplete.value = value + first_result.substring(match + value.length);
+                autocomplete.current = first_result;
+            }
+            else{
+                autocomplete.value = autocomplete.current = value;
+            }
+        }
+        function accept_autocomplete(event){
+            if((event || window.event).keyCode === 13) {
+                this.value = autocomplete.value = autocomplete.current;
+            }
+        }
+        function accept_suggestion(event){
+          document.getElementById('userinput').setAttribute("value","")
+            var target = (event || window.event).target;
+            userinput.value = autocomplete.value = target.textContent;
+            while(suggestions.lastChild){
+                suggestions.removeChild(suggestions.lastChild);
+            }
+            
+            return false;
+        }
+    }());
+  </script>
+
+
+</body>
+</html>
